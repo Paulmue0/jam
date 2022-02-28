@@ -1,11 +1,10 @@
 package com.project.jam;
 
-import androidx.appcompat.app.AppCompatActivity;
-
-import android.os.Bundle;
-import android.view.View;
-import android.widget.Button;
-import android.widget.TextView;
+import android.app.Activity;
+import android.content.ClipboardManager;
+import android.content.Context;
+import android.os.Handler;
+import android.os.Looper;
 
 import be.tarsos.dsp.AudioDispatcher;
 import be.tarsos.dsp.AudioEvent;
@@ -14,46 +13,24 @@ import be.tarsos.dsp.pitch.PitchDetectionHandler;
 import be.tarsos.dsp.pitch.PitchDetectionResult;
 import be.tarsos.dsp.pitch.PitchProcessor;
 
+public class PitchDetection {
+    AudioDispatcher dispatcher;
+    MyCallback myCallback = null;
 
-
-public class MainActivity extends AppCompatActivity implements MyCallback {
-    TextView tv;
-    Button startButton;
-    Button stopButton;
-    //AudioDispatcher dispatcher;
-    PitchDetection pitchDetection;
-
-    @Override
-    protected void onCreate(Bundle savedInstanceState) {
-        super.onCreate(savedInstanceState);
-        setContentView(R.layout.activity_main);
-        tv = findViewById(R.id.moin);
-        pitchDetection = new PitchDetection(this);
-        startButton = findViewById(R.id.startDetection);
-        startButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                pitchDetection.enablePitchDetection();
-            }
-        });
-        stopButton = findViewById(R.id.stopDetection);
-        stopButton.setOnClickListener(new View.OnClickListener() {
-            @Override
-            public void onClick(View view) {
-                pitchDetection.stopPitchDetection();
-            }
-        });
+    public PitchDetection(MyCallback callback) {
+        this.myCallback = callback;
     }
 
-    @Override
-    public void updateText(String string) {
-        tv.setText(string);
-    }
-    /**
-    private void stopPitchDetection() {
+
+    void stopPitchDetection() {
         System.out.println(Thread.activeCount());
         System.out.println(Thread.getAllStackTraces().toString());
-        dispatcher.stop();
+        try {
+            dispatcher.stop();
+        }catch (IllegalStateException e){
+            e.printStackTrace();
+        }
+
     }
 
     void enablePitchDetection(){
@@ -64,14 +41,16 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
                 @Override
                 public void handlePitch(PitchDetectionResult pitchDetectionResult,
                                         AudioEvent audioEvent) {
-                    runOnUiThread(new Runnable() {
+                    new Handler(Looper.getMainLooper()).post(new Runnable() {
                         @Override
                         public void run() {
                             float pitch = pitchDetectionResult.getPitch();
                             try {
                                 if(pitch > 0)
-                                    tv.setText(Float.toString(pitch));
+                                    myCallback.updateText(Float.toString(pitch));
+
                                 System.out.println(pitch);
+
                             }catch (Exception e){
                                 e.printStackTrace();
                             };
@@ -82,7 +61,5 @@ public class MainActivity extends AppCompatActivity implements MyCallback {
             new Thread(dispatcher, "Audio Dispatcher").start();
         }
     }
-    */
-
 
 }
